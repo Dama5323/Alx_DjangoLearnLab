@@ -5,8 +5,10 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
 from django.urls import reverse_lazy
-from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
+from django.contrib.auth.decorators import user_passes_test, login_required
 from .forms import BookForm
+from django.contrib.auth.decorators import permission_required
+
 
 # ✅ Function-based view to list books
 def list_books(request):
