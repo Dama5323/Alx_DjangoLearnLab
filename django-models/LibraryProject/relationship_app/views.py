@@ -1,12 +1,10 @@
-# relationship_app/views.py
-
 from django.shortcuts import render
-from django.views.generic.detail import DetailView  # ✅ explicitly use DetailView
-from .models import Book, Library  # ✅ make sure Library is explicitly imported
+from django.views.generic import DetailView  
+from .models import Book, Library  
 
-# ✅ Function-based view
+# ✅ Function-based view 
 def list_books(request):
-    books = Book.objects.select_related('author').all()
+    books = Book.objects.all()  
     return render(request, 'relationship_app/list_books.html', {'books': books})
 
 # ✅ Class-based view using DetailView
