@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test, login_required
 from .forms import BookForm
 from django.contrib.auth.decorators import permission_required
+from .models import Library
 
 
 # ✅ Function-based view to list books
