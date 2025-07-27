@@ -1,7 +1,6 @@
 from django.contrib import admin
-from .models import Book
+from .models import Book, CustomUser, BookLoan
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Book, BookLoan
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
@@ -20,5 +19,4 @@ class CustomUserAdmin(UserAdmin):
     )
 
 admin.site.register(CustomUser, CustomUserAdmin)
-admin.site.register(Book)
-admin.site.register(BookLoan
+admin.site.register(BookLoan)
