@@ -1,7 +1,6 @@
 <!-- book_list.html -->
-<form method="post">
+<form method="get">
     {% csrf_token %}
-    <!-- Optional: your search input -->
     <input type="text" name="q" placeholder="Search by title...">
     <button type="submit">Search</button>
 </form>
