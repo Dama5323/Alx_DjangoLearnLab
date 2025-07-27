@@ -23,7 +23,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-l0n%kpd$knvanw#b2-=s31y=mpjnfwmim$anox%h7%jwibqt2m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+
+# 🛡️ Browser protections
+SECURE_BROWSER_XSS_FILTER = True  # Enables the X-XSS-Protection header to prevent XSS attacks
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevents the browser from guessing the content type
+X_FRAME_OPTIONS = 'DENY'  # Prevents clickjacking by disallowing your site to be loaded in frames
+
+# 🧁 Cookies over HTTPS only
+CSRF_COOKIE_SECURE = True  # Ensures the CSRF cookie is sent only over HTTPS
+SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
+
+# 🔐 HSTS: HTTP Strict Transport Security
+SECURE_HSTS_SECONDS = 3600  # Forces HTTPS for 1 hour; increase in production (e.g., 31536000 for 1 year)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applies HSTS to all subdomains
+SECURE_HSTS_PRELOAD = True  # Requests inclusion in browsers' HSTS preload lists
+
+# 🌐 Redirect all HTTP requests to HTTPS
+SECURE_SSL_REDIRECT = True  # Automatically redirects HTTP to HTTPS 
 
 ALLOWED_HOSTS = []
 
@@ -38,7 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bookshelf',
-    'relationship_app.apps.RelationshipAppConfig'
+    'relationship_app.apps.RelationshipAppConfig',
+    'csp',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +67,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     'csp.middleware.CSPMiddleware',
 ]
+
+
+# CSP settings
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", 'https://fonts.googleapis.com')
+CSP_SCRIPT_SRC = ("'self'",)
+
 
 ROOT_URLCONF = 'LibraryProject.urls'
 

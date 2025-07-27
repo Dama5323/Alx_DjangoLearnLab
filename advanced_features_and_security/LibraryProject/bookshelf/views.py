@@ -5,6 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from .forms import CustomUserCreationForm
 from django.contrib.auth.decorators import permission_required
 from .models import Book
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
 
 @permission_required('bookshelf.can_view', raise_exception=True)
 def book_list(request):
@@ -40,4 +42,19 @@ def redirect_user_dashboard(user):
         return redirect('student_dashboard')
     else:
         return redirect('home')
+
+
+@login_required
+def book_list(request):
+    query = request.GET.get("q")
+    books = Book.objects.all()
+    if query:
+        books = books.filter(title__icontains=query)  # Safe against SQL injection
+    return render(request, 'bookshelf/book_list.html', {'books': books})
+
+def raise_exception(request):
+    raise PermissionDenied("You do not have permission to view this page.")
+
+def books(request):
+    return render(request, 'bookshelf/book_list.html')  # reuse this view if needed
 

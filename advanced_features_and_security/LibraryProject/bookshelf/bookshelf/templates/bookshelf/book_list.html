@@ -1,0 +1,15 @@
+<!-- book_list.html -->
+<form method="post">
+    {% csrf_token %}
+    <!-- Optional: your search input -->
+    <input type="text" name="q" placeholder="Search by title...">
+    <button type="submit">Search</button>
+</form>
+
+<ul>
+    {% for book in books %}
+        <li>{{ book.title }} by {{ book.author }} ({{ book.publication_year }})</li>
+    {% empty %}
+        <li>No books found.</li>
+    {% endfor %}
+</ul>
