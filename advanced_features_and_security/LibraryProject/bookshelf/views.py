@@ -5,6 +5,7 @@ from .forms import CustomUserCreationForm, ExampleForm
 from django.contrib.auth.decorators import permission_required, login_required
 from django.core.exceptions import PermissionDenied
 from .models import Book
+from .forms import ExampleForm
 
 # Only one book_list view, combining both permissions and logic
 @permission_required('bookshelf.can_view', raise_exception=True)
