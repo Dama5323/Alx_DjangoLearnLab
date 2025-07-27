@@ -32,12 +32,23 @@ Gain familiarity with Django by setting up a Django development environment and 
   - **Admins**: All permissions
 - Views are protected using `@permission_required('app_label.permission_codename')`.
 
+
 # Security Measures Implemented
 
-- `DEBUG = False` in production to hide sensitive information
-- HTTPS enforced with `SECURE_SSL_REDIRECT` and HSTS headers
-- CSRF protection with `{% csrf_token %}` in all forms
-- SQL injection prevented using Django ORM (e.g., `filter(title__icontains=query)`)
-- Cookies secured using `CSRF_COOKIE_SECURE` and `SESSION_COOKIE_SECURE`
-- XSS and clickjacking prevented using browser headers (`X_FRAME_OPTIONS`, CSP)
-- Content Security Policy applied via `django-csp`
+## settings.py
+- Enforced HTTPS with `SECURE_SSL_REDIRECT`
+- Enabled HSTS with `SECURE_HSTS_SECONDS`, `SECURE_HSTS_INCLUDE_SUBDOMAINS`, and `SECURE_HSTS_PRELOAD`
+- Configured secure cookie settings: `SESSION_COOKIE_SECURE` and `CSRF_COOKIE_SECURE`
+- Added protection headers: `X_FRAME_OPTIONS`, `SECURE_CONTENT_TYPE_NOSNIFF`, `SECURE_BROWSER_XSS_FILTER`
+
+## Deployment
+- Configured Nginx for HTTPS with SSL certificate
+- Added HTTP-to-HTTPS redirect
+- Set HSTS and other secure headers
+
+## Potential Improvements
+- Use automated tools like [Mozilla Observatory](https://observatory.mozilla.org/) for security scanning.
+- Implement Content Security Policy (CSP).
+- Regularly rotate TLS certificates.
+
+

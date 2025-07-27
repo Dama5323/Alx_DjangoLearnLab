@@ -25,22 +25,25 @@ SECRET_KEY = 'django-insecure-l0n%kpd$knvanw#b2-=s31y=mpjnfwmim$anox%h7%jwibqt2m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# 🛡️ Browser protections
+# Browser protections
 SECURE_BROWSER_XSS_FILTER = True  # Enables the X-XSS-Protection header to prevent XSS attacks
 SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevents the browser from guessing the content type
 X_FRAME_OPTIONS = 'DENY'  # Prevents clickjacking by disallowing your site to be loaded in frames
 
-# 🧁 Cookies over HTTPS only
+# Cookies over HTTPS only
 CSRF_COOKIE_SECURE = True  # Ensures the CSRF cookie is sent only over HTTPS
 SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
 
-# 🔐 HSTS: HTTP Strict Transport Security
-SECURE_HSTS_SECONDS = 3600  # Forces HTTPS for 1 hour; increase in production (e.g., 31536000 for 1 year)
+# HSTS: HTTP Strict Transport Security
+SECURE_HSTS_SECONDS = 31536000   # Forces HTTPS for 1 hour; increase in production (e.g., 31536000 for 1 year)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Applies HSTS to all subdomains
 SECURE_HSTS_PRELOAD = True  # Requests inclusion in browsers' HSTS preload lists
 
-# 🌐 Redirect all HTTP requests to HTTPS
-SECURE_SSL_REDIRECT = True  # Automatically redirects HTTP to HTTPS 
+# HTTPS enforcement
+SECURE_SSL_REDIRECT = True # Automatically redirects HTTP to HTTPS 
+
+# Trust HTTPS from proxy (required in reverse proxy setups)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = []
 
