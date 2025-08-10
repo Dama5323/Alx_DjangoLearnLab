@@ -58,20 +58,25 @@ class BookAPITestCase(APITestCase):
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_create_book_authenticated(self):
-        """Test creating book with proper authentication"""
-        # Using force_authenticate instead of login for API testing
-        self.client.force_authenticate(user=self.user)
+
+    def test_create_book_authenticated_with_login(self):
+        """Test creating book using self.client.login for authentication"""
+        login_successful = self.client.login(
+            username='testuser',
+            password='testpass123'
+        )
+        self.assertTrue(login_successful)
+
         data = {
-            'title': 'New Book',
+            'title': 'Book via Login',
             'publication_year': 2023,
             'author': self.author.id
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Book.objects.count(), 3)
-        self.assertEqual(response.data['data']['title'], 'New Book')
-
+        self.assertEqual(response.data['data']['title'], 'Book via Login')
+    
     def test_retrieve_book(self):
         """Test retrieving a single book"""
         url = self.detail_url(self.book1.id)
