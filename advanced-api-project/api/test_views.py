@@ -6,10 +6,11 @@ from .models import Author, Book
 
 class BookAPITestCase(APITestCase):
     def setUp(self):
-        """Set up test data and client"""
+        """Set up test data and client with separate test database"""
+        # Using APIClient for API requests
         self.client = APIClient()
         
-        # Create test users
+        # Create test users in the test database
         self.user = User.objects.create_user(
             username='testuser', 
             password='testpass123'
@@ -20,10 +21,10 @@ class BookAPITestCase(APITestCase):
             password='adminpass123'
         )
         
-        # Create test author
+        # Create test author in the test database
         self.author = Author.objects.create(name='Test Author')
         
-        # Create test books
+        # Create test books in the test database
         self.book1 = Book.objects.create(
             title='Django for Beginners',
             publication_year=2020,
@@ -58,7 +59,8 @@ class BookAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_book_authenticated(self):
-        """Test creating book with authentication"""
+        """Test creating book with proper authentication"""
+        # Using force_authenticate instead of login for API testing
         self.client.force_authenticate(user=self.user)
         data = {
             'title': 'New Book',
