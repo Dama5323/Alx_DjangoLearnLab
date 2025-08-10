@@ -1,11 +1,13 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
+from django_filters import rest_framework  
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter 
+
 from .models import Author, Book
 from .serializers import AuthorSerializer, BookSerializer
 from .permissions import IsCreatorOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
 
 
 class CustomAPIResponseMixin:
@@ -26,62 +28,38 @@ class AuthorListCreateView(generics.ListCreateAPIView):
 class BookListView(generics.ListAPIView):
     """
     View to list all books with filtering, searching, and ordering
-    Available filters:
-    - title (exact, icontains)
-    - author (id, name via related field)
-    - publication_year (exact, gt, gte, lt, lte)
-    Search fields: title, author__name
-    Ordering fields: all model fields
-    Example queries:
-    /api/books/?title__icontains=django
-    /api/books/?author=1
-    /api/books/?publication_year__gte=2020
-    /api/books/?search=django
-    /api/books/?ordering=-publication_year,title
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.AllowAny]
-    
-    # Filtering configuration
+
     filter_backends = [
         DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter
+        SearchFilter,
+        OrderingFilter
     ]
-    
 
     filterset_fields = {
         'title': ['exact', 'icontains'],
         'author': ['exact'],
         'publication_year': ['exact', 'gt', 'gte', 'lt', 'lte'],
     }
-    
-    # Search fields (uses SearchFilter)
+
     search_fields = ['title', 'author__name']
-    
-    # Ordering fields (uses OrderingFilter)
     ordering_fields = ['title', 'publication_year', 'author__name']
-    ordering = ['title']  # Default ordering
+    ordering = ['title']
+
 
 class BookDetailView(generics.RetrieveAPIView):
-    """
-    View to retrieve a single book by ID (GET)
-    Accessible to all users
-    """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class BookCreateView(CustomAPIResponseMixin, generics.CreateAPIView):
-    """
-    View to create a new book (POST)
-    Restricted to authenticated users
-    """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]  
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -95,13 +73,9 @@ class BookCreateView(CustomAPIResponseMixin, generics.CreateAPIView):
 
 
 class BookUpdateView(CustomAPIResponseMixin, generics.UpdateAPIView):
-    """
-    View to update an existing book (PUT/PATCH)
-    Restricted to authenticated users who are the creators
-    """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated, IsCreatorOrReadOnly]  
+    permission_classes = [IsAuthenticated, IsCreatorOrReadOnly]
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -117,13 +91,9 @@ class BookUpdateView(CustomAPIResponseMixin, generics.UpdateAPIView):
 
 
 class BookDeleteView(generics.DestroyAPIView):
-    """
-    View to delete a book (DELETE)
-    Restricted to authenticated users who are the creators
-    """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated, IsCreatorOrReadOnly] 
+    permission_classes = [IsAuthenticated, IsCreatorOrReadOnly]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -140,5 +110,5 @@ class BookListCreateView(generics.ListCreateAPIView):
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            return [IsAuthenticated()]  
+            return [IsAuthenticated()]
         return [permissions.AllowAny()]
