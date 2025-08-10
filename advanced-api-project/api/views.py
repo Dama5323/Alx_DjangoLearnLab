@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status, filters
 from rest_framework.response import Response
+from django_filters import rest_framework  
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Author, Book
 from .serializers import AuthorSerializer, BookSerializer
@@ -9,7 +10,6 @@ from .permissions import IsCreatorOrReadOnly
 class CustomAPIResponseMixin:
     """Mixin for standardized API responses"""
     def create_response(self, serializer, status_code=status.HTTP_200_OK, headers=None):
-        """Create a consistent response format"""
         return Response({
             'status': 'success',
             'data': serializer.data
@@ -19,7 +19,7 @@ class CustomAPIResponseMixin:
 class AuthorListCreateView(generics.ListCreateAPIView):
     """
     View to list and create authors
-    - GET: Available to all (read-only)
+    - GET: Available to all
     - POST: Requires authentication
     """
     queryset = Author.objects.all().order_by('name')
@@ -33,29 +33,37 @@ class AuthorListCreateView(generics.ListCreateAPIView):
 
 class BookListView(generics.ListAPIView):
     """
-    View to list books with filtering, searching and ordering
-    Example queries:
-    /api/books/?title__icontains=django
-    /api/books/?author=1&publication_year__gte=2020
-    /api/books/?search=rowling
-    /api/books/?ordering=-publication_year,title
+    View to list books with comprehensive filtering capabilities
+    Filtering examples:
+    - /api/books/?title=Example
+    - /api/books/?author=1
+    - /api/books/?publication_year__gte=2020
+    - /api/books/?title__icontains=django&publication_year__lt=2020
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.AllowAny]
+    
+    # Filter backends configuration
     filter_backends = [
-        DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter
+        DjangoFilterBackend,  # For field filtering
+        filters.SearchFilter,  # For search functionality
+        filters.OrderingFilter  # For ordering results
     ]
+    
+    # Django-filter configuration
     filterset_fields = {
         'title': ['exact', 'icontains'],
         'author': ['exact'],
         'publication_year': ['exact', 'gt', 'gte', 'lt', 'lte'],
     }
+    
+    # Search fields configuration
     search_fields = ['title', 'author__name']
+    
+    # Ordering configuration
     ordering_fields = ['title', 'publication_year', 'author__name']
-    ordering = ['title']
+    ordering = ['title']  # Default ordering
 
 
 class BookDetailView(generics.RetrieveAPIView):
