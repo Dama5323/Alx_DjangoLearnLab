@@ -5,7 +5,8 @@ from .views import (
     PostListView, PostDetailView,
     PostCreateView, PostUpdateView,
     PostDeleteView,
-    CommentCreateView, CommentUpdateView, CommentDeleteView
+    CommentCreateView, CommentUpdateView, CommentDeleteView,
+    PostByTagListView   # <-- import this class-based view
 )
 
 urlpatterns = [
@@ -13,9 +14,10 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(template_name="blog/logout.html"), name="logout"),
     path("register/", views.register_view, name="register"),
     path("profile/", views.profile_view, name="profile"),
-    path('search/', views.post_search, name='post-search'),
-    path('tags/<str:tag>/', views.posts_by_tag, name='posts-by-tag'),
+    path("search/", views.post_search, name="post-search"),
 
+    # Tag-based filtering
+    path("tags/<slug:tag_slug>/", PostByTagListView.as_view(), name="posts-by-tag"),
 
     # Blog post CRUD
     path("posts/", PostListView.as_view(), name="post-list"),
