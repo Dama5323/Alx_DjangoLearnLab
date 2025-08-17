@@ -1,9 +1,15 @@
 {% extends "blog/base.html" %}
+{% load static %}
+
 {% block content %}
   <h2>Login</h2>
-  <form method="post">
+  <form method="post" class="auth-form" id="login-form">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Login</button>
+    <button type="submit" class="auth-button">Login</button>
   </form>
+  
+  <!-- Include static files -->
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+  <script src="{% static 'js/auth.js' %}"></script>
 {% endblock %}
