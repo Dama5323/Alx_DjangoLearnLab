@@ -1,0 +1,14 @@
+{% extends "blog/base.html" %}
+{% block content %}
+  <h1>Blog Posts</h1>
+  {% for post in posts %}
+    <article>
+      <h2><a href="{% url 'post-detail' post.id %}">{{ post.title }}</a></h2>
+      <p>{{ post.content|truncatechars:100 }}</p>
+      <small>By {{ post.author }} on {{ post.created_at|date:"F d, Y" }}</small>
+    </article>
+  {% endfor %}
+  {% if is_paginated %}
+    <!-- Pagination logic here -->
+  {% endif %}
+{% endblock %}

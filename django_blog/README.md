@@ -130,3 +130,21 @@ python manage.py migrate
 ```bash
 python manage.py collectstatic
 ```
+
+## Blog Post Management
+
+### Features
+- View all posts (public)
+- View post details (public)
+- Create new posts (authenticated users)
+- Edit posts (authors only)
+- Delete posts (authors only)
+
+### URL Endpoints
+| URL Pattern | View | Access |
+|-------------|------|--------|
+| /posts/ | Post list | Public |
+| /posts/new/ | Create post | Authenticated |
+| /posts/<id>/ | Post details | Public |
+| /posts/<id>/update/ | Edit post | Author only |
+| /posts/<id>/delete/ | Delete post | Author only |
