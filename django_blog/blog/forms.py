@@ -19,8 +19,13 @@ class ProfileUpdateForm(forms.ModelForm):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'content']
-
+        fields = ['title', 'content', 'tags']
+        widgets = {
+            'tags': forms.TextInput(attrs={
+                'placeholder': 'Enter tags separated by commas',
+                'data-role': 'tagsinput'  # For Bootstrap Tags Input if using
+            })
+        }
 
 class CommentForm(forms.ModelForm):
     class Meta:

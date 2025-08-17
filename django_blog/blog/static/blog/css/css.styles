@@ -43,3 +43,16 @@ footer {
     background-color: #333;
     color: white;
 }
+
+.post-tags {
+    margin: 1rem 0;
+}
+
+.post-tags .badge {
+    margin-right: 0.5rem;
+    text-decoration: none;
+}
+
+.post-tags .badge:hover {
+    opacity: 0.8;
+}

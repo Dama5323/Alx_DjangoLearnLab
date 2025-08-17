@@ -1,0 +1,18 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+  <h2>Search Results</h2>
+  {% if query %}
+    <p>Showing results for: <strong>{{ query }}</strong></p>
+  {% elif tag %}
+    <p>Showing posts tagged with: <strong>{{ tag }}</strong></p>
+  {% endif %}
+
+  {% if posts %}
+    {% for post in posts %}
+      {% include "blog/post_card.html" %}
+    {% endfor %}
+  {% else %}
+    <p>No posts found.</p>
+  {% endif %}
+{% endblock %}

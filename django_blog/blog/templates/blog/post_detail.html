@@ -11,4 +11,11 @@
       </div>
     {% endif %}
   </article>
+  <div class="post-tags">
+  {% for tag in post.tags.all %}
+    <a href="{% url 'posts-by-tag' tag.name %}" class="badge bg-secondary">
+      {{ tag.name }}
+    </a>
+  {% endfor %}
+</div>
 {% endblock %}

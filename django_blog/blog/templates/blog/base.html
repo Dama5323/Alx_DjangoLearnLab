@@ -31,4 +31,9 @@
 
     <script src="{% static 'js/scripts.js' %}"></script>
 </body>
+<form class="d-flex" action="{% url 'post-search' %}" method="get">
+  <input class="form-control me-2" type="search" 
+         name="q" placeholder="Search posts..." aria-label="Search">
+  <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
 </html>

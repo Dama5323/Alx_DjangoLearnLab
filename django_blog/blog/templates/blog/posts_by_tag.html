@@ -1,0 +1,11 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+  <h2>Posts tagged with "{{ tag.name }}"</h2>
+  
+  {% for post in posts %}
+    {% include "blog/post_card.html" %}
+  {% empty %}
+    <p>No posts found with this tag.</p>
+  {% endfor %}
+{% endblock %}

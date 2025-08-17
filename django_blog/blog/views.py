@@ -10,6 +10,9 @@ from django.views.generic.edit import FormMixin
 from django.urls import reverse
 from .models import Post, Comment
 from .forms import RegisterForm, ProfileUpdateForm, PostForm, CommentForm
+from django.db.models import Q
+from taggit.models import Tag
+
 
 # Authentication Views
 def register_view(request):
@@ -148,3 +151,33 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.author
+    
+
+def post_search(request):
+    query = request.GET.get('q')
+    tag = request.GET.get('tag')
+    
+    if tag:
+        posts = Post.objects.filter(tags__name__in=[tag])
+    elif query:
+        posts = Post.objects.filter(
+            Q(title__icontains=query) | 
+            Q(content__icontains=query) |
+            Q(tags__name__icontains=query)
+        ).distinct()
+    else:
+        posts = Post.objects.none()
+    
+    return render(request, 'blog/post_search.html', {
+        'posts': posts,
+        'query': query,
+        'tag': tag
+    })
+
+def posts_by_tag(request, tag):
+    tag_obj = get_object_or_404(Tag, name=tag)
+    posts = Post.objects.filter(tags__name__in=[tag])
+    return render(request, 'blog/posts_by_tag.html', {
+        'tag': tag_obj,
+        'posts': posts
+    })
