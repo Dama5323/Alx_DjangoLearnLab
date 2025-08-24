@@ -1,7 +1,7 @@
-from rest_framework import status, generics
+from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated  
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import login
 from django.shortcuts import get_object_or_404
@@ -12,6 +12,7 @@ from .serializers import (
     UserProfileSerializer,
     UserFollowSerializer
 )
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -45,7 +46,7 @@ def login_user(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])  
 def user_profile(request):
     if request.method == 'GET':
         serializer = UserProfileSerializer(request.user)
@@ -59,8 +60,8 @@ def user_profile(request):
 
 # Class-based views for follow/unfollow functionality
 class FollowUserView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
-    queryset = User.objects.all()
+    permission_classes = [permissions.IsAuthenticated]  
+    queryset = CustomUser.objects.all()  
     
     def post(self, request, *args, **kwargs):
         user_to_follow = self.get_object()
@@ -77,8 +78,8 @@ class FollowUserView(generics.GenericAPIView):
         return Response({"error": "Unable to follow user."}, status=status.HTTP_400_BAD_REQUEST)
 
 class UnfollowUserView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
-    queryset = User.objects.all()
+    permission_classes = [permissions.IsAuthenticated]  
+    queryset = CustomUser.objects.all()  
     
     def post(self, request, *args, **kwargs):
         user_to_unfollow = self.get_object()
@@ -91,9 +92,9 @@ class UnfollowUserView(generics.GenericAPIView):
         
         return Response({"error": "Unable to unfollow user."}, status=status.HTTP_400_BAD_REQUEST)
 
-# Keep your existing function-based views for followers/following lists
+
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])  
 def get_followers(request):
     """Get list of followers"""
     followers = request.user.followers.all()
@@ -101,7 +102,7 @@ def get_followers(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])  
 def get_following(request):
     """Get list of users being followed"""
     following = request.user.following.all()
@@ -109,7 +110,7 @@ def get_following(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])  
 def user_profile_with_follow_info(request):
     """Get user profile with follow information"""
     serializer = UserProfileSerializer(request.user, context={'request': request})
