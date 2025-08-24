@@ -13,11 +13,11 @@ def register_user(request):
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user)
         return Response({
-            'token': token.key,
+            'token': user.token,
             'user_id': user.id,
-            'username': user.username
+            'username': user.username,
+            'email': user.email
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -27,10 +27,10 @@ def login_user(request):
     serializer = UserLoginSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
+        token = serializer.validated_data['token']
         login(request, user)
         return Response({
-            'token': token.key,
+            'token': token,
             'user_id': user.id,
             'username': user.username
         }, status=status.HTTP_200_OK)

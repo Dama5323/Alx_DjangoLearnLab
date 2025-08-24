@@ -1,26 +1,36 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
 from .models import CustomUser
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    token = serializers.CharField(read_only=True)
     
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'password', 'bio', 'profile_picture')
+        fields = ('id', 'username', 'email', 'password', 'bio', 'profile_picture', 'token')
     
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(
+        user = get_user_model().objects.create_user(
             username=validated_data['username'],
             email=validated_data.get('email', ''),
             password=validated_data['password'],
             bio=validated_data.get('bio', ''),
         )
+        
+        # Create token for the new user
+        token = Token.objects.create(user=user)
+        
+        # Add token to user instance for response
+        user.token = token.key
         return user
 
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    token = serializers.CharField(read_only=True)
     
     def validate(self, data):
         username = data.get('username')
@@ -30,7 +40,10 @@ class UserLoginSerializer(serializers.Serializer):
             user = authenticate(username=username, password=password)
             if user:
                 if user.is_active:
+                    # Get or create token for the user
+                    token, created = Token.objects.get_or_create(user=user)
                     data['user'] = user
+                    data['token'] = token.key
                     return data
                 else:
                     raise serializers.ValidationError("User account is disabled.")
