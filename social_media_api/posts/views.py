@@ -34,16 +34,15 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
-        post = self.get_object()
+        post = get_object_or_404(Post, pk=pk)
         user = request.user
+        like, created = Like.objects.get_or_create(user=user, post=post)
         
-        if Like.objects.filter(user=user, post=post).exists():
+        if not created:
             return Response({"error": "You have already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
         
-        like = Like.objects.create(user=user, post=post)
-        
-        
-        if post.author != user:  # Don't notify yourself
+        # Create notification if it's not the user's own post
+        if post.author != user:
             Notification.objects.create(
                 recipient=post.author,
                 actor=user,
@@ -56,7 +55,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def unlike(self, request, pk=None):
-        post = self.get_object()
+        post = get_object_or_404(Post, pk=pk)
         user = request.user
         
         try:
