@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import login
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from notifications.models import Notification
 from .serializers import (
     UserRegistrationSerializer, 
     UserLoginSerializer, 
@@ -75,6 +76,28 @@ class FollowUserView(generics.GenericAPIView):
             return Response({"error": "You are already following this user."}, status=status.HTTP_400_BAD_REQUEST)
         
         if request.user.follow(user_to_follow):
+            return Response({"message": f"You are now following {user_to_follow.username}."}, status=status.HTTP_200_OK)
+        
+        return Response({"error": "Unable to follow user."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    def post(self, request, *args, **kwargs):
+        user_to_follow = self.get_object()
+        
+        if request.user == user_to_follow:
+            return Response({"error": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.user.following.filter(id=user_to_follow.id).exists():
+            return Response({"error": "You are already following this user."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.user.follow(user_to_follow):
+            # Create notification for the user being followed
+            Notification.objects.create(
+                recipient=user_to_follow,
+                actor=request.user,
+                verb="started following you"
+            )
+            
             return Response({"message": f"You are now following {user_to_follow.username}."}, status=status.HTTP_200_OK)
         
         return Response({"error": "Unable to follow user."}, status=status.HTTP_400_BAD_REQUEST)

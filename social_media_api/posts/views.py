@@ -9,6 +9,9 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from .models import Post, Comment
 from .serializers import PostSerializer, PostListSerializer, CommentSerializer
 from .permissions import IsAuthorOrReadOnly
+from .models import Like
+from .serializers import LikeSerializer
+from notifications.models import Notification
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -27,6 +30,41 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    
+    @action(detail=True, methods=['post'])
+    def like(self, request, pk=None):
+        post = self.get_object()
+        user = request.user
+        
+        if Like.objects.filter(user=user, post=post).exists():
+            return Response({"error": "You have already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        like = Like.objects.create(user=user, post=post)
+        
+        
+        if post.author != user:  # Don't notify yourself
+            Notification.objects.create(
+                recipient=post.author,
+                actor=user,
+                verb="liked your post",
+                target=post
+            )
+        
+        serializer = LikeSerializer(like)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['post'])
+    def unlike(self, request, pk=None):
+        post = self.get_object()
+        user = request.user
+        
+        try:
+            like = Like.objects.get(user=user, post=post)
+            like.delete()
+            return Response({"message": "Post unliked successfully."}, status=status.HTTP_200_OK)
+        except Like.DoesNotExist:
+            return Response({"error": "You have not liked this post."}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['get', 'post'])
     def comments(self, request, pk=None):
@@ -48,7 +86,28 @@ class PostViewSet(viewsets.ModelViewSet):
             
             serializer = CommentSerializer(comments, many=True)
             return Response(serializer.data)
-
+        
+    @action(detail=True, methods=['get', 'post'])
+    def comments(self, request, pk=None):
+        post = self.get_object()
+        if request.method == 'POST':
+            serializer = CommentSerializer(data=request.data)
+            if serializer.is_valid():
+                comment = serializer.save(author=request.user, post=post)
+                
+                # Create notification for post author if it's not their own comment
+                if post.author != request.user:
+                    Notification.objects.create(
+                        recipient=post.author,
+                        actor=request.user,
+                        verb="commented on your post",
+                        target=post
+                    )
+                
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            ...
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Post, Comment
 from django.conf import settings
+from .models import Like
+
 
 class CommentSerializer(serializers.ModelSerializer):
     author_username = serializers.ReadOnlyField(source='author.username')
@@ -52,3 +54,11 @@ class PostListSerializer(serializers.ModelSerializer):
     
     def get_excerpt(self, obj):
         return obj.content[:100] + '...' if len(obj.content) > 100 else obj.content
+    
+class LikeSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    
+    class Meta:
+        model = Like
+        fields = ['id', 'user', 'post', 'created_at']
+        read_only_fields = ['user', 'created_at']

@@ -3,7 +3,8 @@ from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from .models import Post, Comment
+from .models import Post, Comment,Like
+from accounts.models import CustomUser
 
 User = get_user_model()
 
@@ -134,3 +135,30 @@ class PostTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['title'], 'Test Post')
+
+
+class LikeTests(APITestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpass')
+        self.other_user = CustomUser.objects.create_user(username='otheruser', password='testpass')
+        self.post = Post.objects.create(author=self.other_user, title='Test Post', content='Test Content')
+        self.client.force_authenticate(user=self.user)
+    
+    def test_like_post(self):
+        url = f'/api/posts/{self.post.id}/like/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Like.objects.filter(user=self.user, post=self.post).exists())
+    
+    def test_cannot_like_twice(self):
+        Like.objects.create(user=self.user, post=self.post)
+        url = f'/api/posts/{self.post.id}/like/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_unlike_post(self):
+        Like.objects.create(user=self.user, post=self.post)
+        url = f'/api/posts/{self.post.id}/unlike/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(Like.objects.filter(user=self.user, post=self.post).exists())
