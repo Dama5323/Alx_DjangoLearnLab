@@ -35,9 +35,9 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
-        post = generics.get_object_or_404(Post, pk=pk)  # Changed to generics.get_object_or_404
+        post = generics.get_object_or_404(Post, pk=pk)  
         user = request.user
-        like, created = Like.objects.get_or_create(user=request.user, post=post)  # Changed to request.user
+        like, created = Like.objects.get_or_create(user=request.user, post=post)  
         
         if not created:
             return Response({"error": "You have already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
@@ -58,11 +58,11 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def unlike(self, request, pk=None):
-        post = generics.get_object_or_404(Post, pk=pk)  # Changed to generics.get_object_or_404
+        post = generics.get_object_or_404(Post, pk=pk)  
         user = request.user
         
         try:
-            like = Like.objects.get(user=request.user, post=post)  # Changed to request.user
+            like = Like.objects.get(user=request.user, post=post)  
             like.delete()
             return Response({"message": "Post unliked successfully."}, status=status.HTTP_200_OK)
         except Like.DoesNotExist:
@@ -152,8 +152,8 @@ class LikePostView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
-        post = generics.get_object_or_404(Post, pk=self.kwargs['pk'])  # Changed to generics.get_object_or_404
-        like, created = Like.objects.get_or_create(user=self.request.user, post=post)  # Changed to self.request.user
+        post = generics.get_object_or_404(Post, pk=self.kwargs['pk'])  
+        like, created = Like.objects.get_or_create(user=self.request.user, post=post) 
         
         if not created:
             raise ValidationError("You have already liked this post.")
@@ -174,9 +174,9 @@ class UnlikePostView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
     
     def delete(self, request, *args, **kwargs):
-        post = generics.get_object_or_404(Post, pk=self.kwargs['pk'])  # Changed to generics.get_object_or_404
+        post = generics.get_object_or_404(Post, pk=self.kwargs['pk']) 
         try:
-            like = Like.objects.get(user=request.user, post=post)  # Changed to request.user
+            like = Like.objects.get(user=request.user, post=post)  
             like.delete()
             return Response({"message": "Post unliked successfully."}, status=status.HTTP_200_OK)
         except Like.DoesNotExist:
