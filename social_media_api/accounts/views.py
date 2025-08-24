@@ -58,10 +58,12 @@ def user_profile(request):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 # Class-based views for follow/unfollow functionality
 class FollowUserView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]  
-    queryset = CustomUser.objects.all()  
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = CustomUser.objects.all()
+    lookup_url_kwarg = 'user_id'  # Add this line
     
     def post(self, request, *args, **kwargs):
         user_to_follow = self.get_object()
@@ -76,6 +78,23 @@ class FollowUserView(generics.GenericAPIView):
             return Response({"message": f"You are now following {user_to_follow.username}."}, status=status.HTTP_200_OK)
         
         return Response({"error": "Unable to follow user."}, status=status.HTTP_400_BAD_REQUEST)
+
+class UnfollowUserView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = CustomUser.objects.all()
+    lookup_url_kwarg = 'user_id'  
+    
+    def post(self, request, *args, **kwargs):
+        user_to_unfollow = self.get_object()
+        
+        if not request.user.following.filter(id=user_to_unfollow.id).exists():
+            return Response({"error": "You are not following this user."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.user.unfollow(user_to_unfollow):
+            return Response({"message": f"You have unfollowed {user_to_unfollow.username}."}, status=status.HTTP_200_OK)
+        
+        return Response({"error": "Unable to unfollow user."}, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class UnfollowUserView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]  
