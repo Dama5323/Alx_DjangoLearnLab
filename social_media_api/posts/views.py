@@ -12,6 +12,7 @@ from .permissions import IsAuthorOrReadOnly
 from .models import Like
 from .serializers import LikeSerializer
 from notifications.models import Notification
+from rest_framework import generics
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -34,7 +35,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
-        post = get_object_or_404(Post, pk=pk)
+        post = generics.get_object_or_404(Post, pk=pk) 
         user = request.user
         like, created = Like.objects.get_or_create(user=user, post=post)
         
@@ -55,7 +56,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def unlike(self, request, pk=None):
-        post = get_object_or_404(Post, pk=pk)
+        post = generics.get_object_or_404(Post, pk=pk)
         user = request.user
         
         try:
