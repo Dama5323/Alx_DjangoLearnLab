@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, filters, status
+from rest_framework import viewsets, permissions, filters, status 
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -6,13 +6,14 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from .models import Post, Comment
-from .serializers import PostSerializer, PostListSerializer, CommentSerializer
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from .models import Post, Comment, Like
+from .serializers import PostSerializer, PostListSerializer, CommentSerializer, LikeSerializer
 from .permissions import IsAuthorOrReadOnly
-from .models import Like
-from .serializers import LikeSerializer
 from notifications.models import Notification
 from rest_framework import generics
+from rest_framework.exceptions import ValidationError
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -31,11 +32,10 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
     
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
-        post = generics.get_object_or_404(Post, pk=pk) 
+        post = get_object_or_404(Post, pk=pk) 
         user = request.user
         like, created = Like.objects.get_or_create(user=user, post=post)
         
@@ -48,7 +48,9 @@ class PostViewSet(viewsets.ModelViewSet):
                 recipient=post.author,
                 actor=user,
                 verb="liked your post",
-                target=post
+                target=post,
+                content_type=ContentType.objects.get_for_model(post),
+                object_id=post.id
             )
         
         serializer = LikeSerializer(like)
@@ -56,7 +58,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def unlike(self, request, pk=None):
-        post = generics.get_object_or_404(Post, pk=pk)
+        post = get_object_or_404(Post, pk=pk)
         user = request.user
         
         try:
@@ -66,27 +68,6 @@ class PostViewSet(viewsets.ModelViewSet):
         except Like.DoesNotExist:
             return Response({"error": "You have not liked this post."}, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=True, methods=['get', 'post'])
-    def comments(self, request, pk=None):
-        post = self.get_object()
-        if request.method == 'POST':
-            # Handle comment creation
-            serializer = CommentSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save(author=request.user, post=post)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            # Handle comment listing
-            comments = post.comments.all()
-            page = self.paginate_queryset(comments)
-            if page is not None:
-                serializer = CommentSerializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-            
-            serializer = CommentSerializer(comments, many=True)
-            return Response(serializer.data)
-        
     @action(detail=True, methods=['get', 'post'])
     def comments(self, request, pk=None):
         post = self.get_object()
@@ -101,13 +82,24 @@ class PostViewSet(viewsets.ModelViewSet):
                         recipient=post.author,
                         actor=request.user,
                         verb="commented on your post",
-                        target=post
+                        target=post,
+                        content_type=ContentType.objects.get_for_model(post),
+                        object_id=post.id
                     )
                 
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            ...
+            # Handle comment listing
+            comments = post.comments.all()
+            page = self.paginate_queryset(comments)
+            if page is not None:
+                serializer = CommentSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
@@ -152,3 +144,42 @@ def user_feed(request):
         'pages': paginator.num_pages,
         'total': paginator.count
     })
+
+
+# Add these views for direct URL access (for the URL patterns requirement)
+class LikePostView(generics.CreateAPIView):
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        like, created = Like.objects.get_or_create(
+            user=self.request.user, 
+            post=post
+        )
+        if not created:
+            raise ValidationError("You have already liked this post.")
+        
+        # Create notification
+        if post.author != self.request.user:
+            Notification.objects.create(
+                recipient=post.author,
+                actor=self.request.user,
+                verb="liked your post",
+                target=post,
+                content_type=ContentType.objects.get_for_model(post),
+                object_id=post.id
+            )
+
+
+class UnlikePostView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        try:
+            like = Like.objects.get(user=request.user, post=post)
+            like.delete()
+            return Response({"message": "Post unliked successfully."}, status=status.HTTP_200_OK)
+        except Like.DoesNotExist:
+            return Response({"error": "You have not liked this post."}, status=status.HTTP_400_BAD_REQUEST)
