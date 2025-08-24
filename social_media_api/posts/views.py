@@ -1,12 +1,14 @@
 from rest_framework import viewsets, permissions, filters, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from .models import Post, Comment
 from .serializers import PostSerializer, PostListSerializer, CommentSerializer
 from .permissions import IsAuthorOrReadOnly
-from rest_framework import generics, permissions
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -47,6 +49,7 @@ class PostViewSet(viewsets.ModelViewSet):
             serializer = CommentSerializer(comments, many=True)
             return Response(serializer.data)
 
+
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
@@ -63,12 +66,30 @@ class CommentViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['post_pk'] = self.kwargs['post_pk']
         return context
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_feed(request):
+    """Get posts from users that the current user follows"""
+    following_users = request.user.following.all()
+    posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
     
-
-class FeedView(generics.ListAPIView):
-    serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Post.objects.filter(author__in=user.following.all()).order_by('-created_at')
+    # Pagination
+    page = request.query_params.get('page', 1)
+    paginator = Paginator(posts, 10)  # 10 posts per page
+    
+    try:
+        posts_page = paginator.page(page)
+    except PageNotAnInteger:
+        posts_page = paginator.page(1)
+    except EmptyPage:
+        posts_page = paginator.page(paginator.num_pages)
+    
+    serializer = PostListSerializer(posts_page, many=True)
+    return Response({
+        'posts': serializer.data,
+        'page': posts_page.number,
+        'pages': paginator.num_pages,
+        'total': paginator.count
+    })
